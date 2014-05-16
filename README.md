@@ -81,7 +81,7 @@ $ sudo git clone https://github.com/tvdzwan/hyperion.git "$HYPERION_DIR"
 $ sudo cp HyperionSource/LedDevice* $HYPERION_DIR/libsrc/leddevice/
 # edit CMakeList.txt line 51 or copy the pre edited file: 
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -Wall -lwiringPi -lNicoHoodProtocol -DRaspberryPi")
-$ sudo cp HyperionSource/CMakeList.txt  $HYPERION_DIR/
+$ sudo cp HyperionSource/CMakeLists.txt  $HYPERION_DIR/CMakeLists.txt
 
 # create and enter the build directory
 $ sudo mkdir "$HYPERION_DIR/build"
