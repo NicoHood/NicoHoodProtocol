@@ -24,8 +24,13 @@ hyperionconfig:
 	sudo cp ./HyperionSource/hyperion.config.json /etc/hyperion.config.json
 	@echo Successfully installed hyperionconfig
 
+hyperioncopysource:
+	sudo cp ./HyperionSource/LedDevice* ./hyperion/libsrc/leddevice/
+	@echo Successfully copied sourcefiles
+
 serialtest: examples/Arduino_Serial/Pi_Serial.cpp
 	gcc -o examples/Arduino_Serial/Pi_Serial.o examples/Arduino_Serial/Pi_Serial.cpp -DRaspberryPi -lwiringPi -lNicoHoodProtocol -pedantic -Wall
 
 ambilight: examples/Ambilight/Ambilight_Serial.cpp
 	gcc -o examples/Ambilight/Ambilight_Serial.o examples/Ambilight/Ambilight_Serial.cpp -DRaspberryPi -lwiringPi -lNicoHoodProtocol -pedantic -Wall
+
