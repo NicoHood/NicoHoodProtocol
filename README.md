@@ -15,31 +15,44 @@ Questions? Just ask under my blog entry/message me there.
 
 
 Installation on Raspberry Pi
-====================
+============================
 This Part is only important for the Raspberry Pi, if you want to use it there.
-First navigate to the directory where you downloaded the library. And then run the install command.
+
+```bash
+#Before you can use the library on Raspberry Pi with the Serial interface
+#You need to install WiringPi:
+$ sudo apt-get install git-core
+$ sudo apt-get update
+$ sudo apt-get upgrade
+$ cd /tmp && git clone git://git.drogon.net/wiringPi
+$ cd wiringPi && ./build
+#Test installation:
+$ gpio -v
+$ gpio readall
+
+#Then install the Protocol library
+#First navigate to the directory where you downloaded the library.
+#And then run the install command.
+$ cd /home/pi/Desktop/Arduino/libraries/NicoHoodProtocol/
+$ sudo make install
+
+#Compile you program of choice:
+$ cd /home/pi/Desktop/Arduino/libraries/NicoHoodProtocol/
+$ sudo make serialtest
+$ sudo make ambilight
+
+#Start your program of choice (close with crtl+c):
+$ cd /home/pi/Desktop/Arduino/libraries/NicoHoodProtocol/
+$ sudo examples/Arduino_Serial/Pi_Serial.o
+$ sudo examples/Ambilight_Serial/Ambilight_Serial.o
+```
+
 Now you are able to use the #include <NicoHoodProtocol.h> global in every program.
-
-    $ cd /home/pi/Desktop/Arduino/libraries/NicoHoodProtocol/
-    $ sudo make install
- 
- Compile you program of choice:
-
-    $ cd /home/pi/Desktop/Arduino/libraries/NicoHoodProtocol/
-    $ sudo make serialtest
-    $ sudo make ambilight
- 
- Start your program of choice (close with crtl+c):
-
-    $ cd /home/pi/Desktop/Arduino/libraries/NicoHoodProtocol/
-    $ sudo examples/Arduino_Serial/Pi_Serial.o
-    $ sudo examples/Ambilight_Serial/Ambilight_Serial.o
-
 See the examples for further information how to setup a Serial on the Raspberry Pi.
 
 
- Ambilight Instructions
-================
+Ambilight Instructions
+======================
 
 In order to use the ambilight sketches you need to use hyperion as ambilight program and also modify it.
 You can use the precompiled hyperion version and just install it or compile the sources if you like to.
@@ -52,7 +65,7 @@ You can use the precompiled hyperion version and just install it or compile the 
  HARDWARE_UART "/dev/ttyAMA0"
 
  Additional: How to compile Hyperion
------------------------------------------------------
+====================================
  How to compile the new Hyperion:
 
 ```bash
@@ -80,7 +93,7 @@ sudo make
  ```
 
  How to start the new Hyperion
-
+```bash
     #close the installed hyperion
     $ sudo killall hyperiond
     #copy your config to build/bin/hyperionconfig.json , in config set type to serial or sharedmemory
@@ -98,14 +111,15 @@ sudo make
  sudo cp ./bin/hyperion-remote /usr/bin/
  sudo cp ./bin/hyperiond /usr/bin/
  sudo cp ./bin/hyperion.config.json /etc/hyperion.config.json
- 
+  ```
+  
  General information about compiling:
- If the Arduino and Raspberry program are placed in the same path make sure to name them different
- You can add other entrys to the makefile with your own sketches, or just create a new makefile
- You can also compile every sketch with the following compiler flags (install wiringPi and SerialProtocol first):
- gcc -o outpath/outname.o inpath/inname.cpp -DRaspberryPi -lwiringPi -lSerialProtocol -pedantic -Wall
- For uninstall just delete the files that the makefile writes. Havent created an uninstall yet, sorry.
- You might want to checkout the makefile in the Arduino_Serial example
+If the Arduino and Raspberry program are placed in the same path make sure to name them different (Pi_programm.cpp, Arduino_programm.ino).
+You can add other entrys to the makefile with your own sketches, or just create a new makefile
+You can also compile every sketch with the following compiler flags (install wiringPi and NicoHoodProtocol first):
+gcc -o outpath/outname.o inpath/inname.cpp -DRaspberryPi -lwiringPi -lSerialProtocol -pedantic -Wall
+For uninstall just delete the files that the makefile writes. Havent created an uninstall yet, sorry.
+You might want to checkout the makefile in the Arduino_Serial example
  
  Direct compile and start program:
  cd /home/pi/Desktop/Arduino/libraries/SerialProtocol/examples/Ambilight
