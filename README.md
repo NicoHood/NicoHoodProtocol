@@ -234,9 +234,10 @@ Address (2-6 blocks) or Command (1block):
 ==========================================================
 
 | Lead     | Data3    | Data2    | Data1    | Data0    | End      |
-| -------- |:--------:|:--------:|:--------:|:--------:| --------:|
+|:--------:|:--------:|:--------:|:--------:|:--------:| :-------:|
 | 11LLLDDD | 0DDDDDDD | 0DDDDDDD | 0DDDDDDD | 0DDDDDDD | 10AAAAAA |
 
+```
 Lead: 2bit lead indicator(11), 3bit length (including data bit #31, command bit #3), 3bit data/3bit command
 Data: 1bit data indicator(0) , 7bit optional data (0-4 blocks)
 End : 2bit end indicator (10), 6bit address
@@ -250,6 +251,7 @@ command  00(1) 4bit command + bit #3 is one
 18-24 =5 101   5 blocks (24bit)
 25-31 =6 11(0) 6 blocks (32bit) + bit #31 is zero
 32    =7 11(1) 6 blocks (32bit) + bit #31 is one
+```
 
 The Protocol knows at any time if its a lead/data/end block.
 It will detect Protocol syntax errors in ErrorLevel (see notes below).
@@ -260,6 +262,7 @@ If you strictly want to filter out Protocol data i recommend to send an inverse
 of two bytes (see user example below).
 
 ErrorLevel:
+```
 ==========
 |76543210|
 ==========
@@ -273,6 +276,7 @@ ErrorLevel:
 5: NHP_ERR_END
 6: NHP_ERR_DATA
 7: NHP_ERR_LEAD
+```
 */
 
 
