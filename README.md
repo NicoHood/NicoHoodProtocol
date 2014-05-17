@@ -58,6 +58,11 @@ In order to use the ambilight sketches you need to use hyperion as ambilight pro
 You can use the precompiled hyperion version and just install it or compile the sources if you like to.
 **The library needs do be installed for this.**
 
+```bash
+$ cd /home/pi/Desktop/Arduino/libraries/NicoHoodProtocol/
+$ sudo make hyperionmod
+$ sudo make hyperionconfig
+ ```
 
  *Find Serial device on Raspberry with ~ls /dev/tty*
  ARDUINO_UNO "/dev/ttyACM0"
@@ -77,6 +82,8 @@ $ cd /home/pi/Desktop/Arduino/libraries/NicoHoodProtocol/
 $ export HYPERION_DIR="hyperion"
 $ sudo git clone https://github.com/tvdzwan/hyperion.git "$HYPERION_DIR"
 
+# copy new sources to the hyperion. If they change anything you might want to
+# compare the two sources and add the code. otherwise it wont compile.
 # copy LedDeviceFactory, LedDeviceTest.h/cpp to libsrc/leddevice
 $ sudo cp HyperionSource/LedDevice* $HYPERION_DIR/libsrc/leddevice/
 # edit CMakeList.txt line 51 or copy the pre edited file: 
@@ -94,24 +101,32 @@ sudo make
 
  How to start the new Hyperion
 ```bash
-    #close the installed hyperion
-    $ sudo killall hyperiond
-    #copy your config to build/bin/hyperionconfig.json , in config set type to serial or sharedmemory
-    #set output to device (above), rate to the serial baud if you use serial. you can use shkey for a personal shkey
-    #example for serial:
- 		"output"     : "/dev/ttyUSB0",
- 		"rate"       : 115200,
- #start new hyperion (close with crtl+c)
- sudo bin/hyperiond bin/hyperion.config.json
- #test visualization (start ambilight on Arduino first)
- hyperion-remote --effect "Rainbow swirl fast" --duration 3000
- 
- How to permanently use the new Hyperion
- # The binaries are build in "$HYPERION_DIR/build/bin". You could copy those to /usr/bin
- sudo cp ./bin/hyperion-remote /usr/bin/
- sudo cp ./bin/hyperiond /usr/bin/
- sudo cp ./bin/hyperion.config.json /etc/hyperion.config.json
-  ```
+#close the installed hyperion
+$ sudo killall hyperiond
+
+#copy your config to build/bin/hyperionconfig.json , in config set type to "serial" or "sharedmemory"
+#set output to device (above), rate to the serial baud if you use serial. you can use "shkey" for a personal shkey
+#example for serial:
+#"output"     : "/dev/ttyUSB0",
+#"rate"       : 115200,
+$ sudo cp ../../HyperionSource/hyperion.config.json bin/hyperion.config.json
+
+#start new hyperion (close with crtl+c)
+$ sudo bin/hyperiond bin/hyperion.config.json
+#test visualization in a new terminal(start ambilight on Arduino first)
+$ hyperion-remote --effect "Rainbow swirl fast" --duration 3000
+```
+
+How to permanently use the new Hyperion
+```bash
+# The binaries are build in "$HYPERION_DIR/build/bin". You could copy those to /usr/bin
+$ sudo cp ./bin/hyperion-remote /usr/bin/
+$ sudo cp ./bin/hyperiond /usr/bin/
+$ sudo cp ./bin/hyperion.config.json /etc/hyperion.config.json
+```
+  
+  /usr/bin/hyperiond /etc/hyperion.config.json </dev/null >/dev/null 2>&1 &
+hyperion-remote --effect "Rainbow swirl fast" --duration 3000
   
  General information about compiling:
 If the Arduino and Raspberry program are placed in the same path make sure to name them different (Pi_programm.cpp, Arduino_programm.ino).

@@ -10,14 +10,14 @@
 
 // Local Leddevice includes
 #ifdef ENABLE_SPIDEV
-#include "LedDeviceLpd6803.h"
-#include "LedDeviceLpd8806.h"
-#include "LedDeviceP9813.h"
-#include "LedDeviceWs2801.h"
+	#include "LedDeviceLpd6803.h"
+	#include "LedDeviceLpd8806.h"
+	#include "LedDeviceP9813.h"
+	#include "LedDeviceWs2801.h"
 #endif
 
 #ifdef ENABLE_TINKERFORGE
-#include "LedDeviceTinkerforge.h"
+	#include "LedDeviceTinkerforge.h"
 #endif
 
 #include "LedDeviceAdalight.h"
@@ -28,6 +28,7 @@
 #include "LedDeviceSedu.h"
 #include "LedDeviceTest.h"
 #include "LedDeviceHyperionUsbasp.h"
+#include "LedDevicePhilipsHue.h"
 
 LedDevice * LedDeviceFactory::construct(const Json::Value & deviceConfig)
 {
@@ -42,8 +43,9 @@ LedDevice * LedDeviceFactory::construct(const Json::Value & deviceConfig)
 	{
 		const std::string output = deviceConfig["output"].asString();
 		const unsigned rate      = deviceConfig["rate"].asInt();
+		const int delay_ms       = deviceConfig["delayAfterConnect"].asInt();
 
-		LedDeviceAdalight* deviceAdalight = new LedDeviceAdalight(output, rate);
+		LedDeviceAdalight* deviceAdalight = new LedDeviceAdalight(output, rate, delay_ms);
 		deviceAdalight->open();
 
 		device = deviceAdalight;
@@ -149,23 +151,23 @@ LedDevice * LedDeviceFactory::construct(const Json::Value & deviceConfig)
 	}
 	else if (type == "hyperion-usbasp-ws2801")
 	{
-		LedDeviceHyperionUsbasp * deviceHyperionUsbasp = new LedDeviceHyperionUsbasp(LedDeviceHyperionUsbasp::CMD_WRITE_WS2801);
-		deviceHyperionUsbasp->open();
-		device = deviceHyperionUsbasp;
+			LedDeviceHyperionUsbasp * deviceHyperionUsbasp = new LedDeviceHyperionUsbasp(LedDeviceHyperionUsbasp::CMD_WRITE_WS2801);
+			deviceHyperionUsbasp->open();
+			device = deviceHyperionUsbasp;
 	}
 	else if (type == "hyperion-usbasp-ws2812")
 	{
-		LedDeviceHyperionUsbasp * deviceHyperionUsbasp = new LedDeviceHyperionUsbasp(LedDeviceHyperionUsbasp::CMD_WRITE_WS2812);
-		deviceHyperionUsbasp->open();
-		device = deviceHyperionUsbasp;
+			LedDeviceHyperionUsbasp * deviceHyperionUsbasp = new LedDeviceHyperionUsbasp(LedDeviceHyperionUsbasp::CMD_WRITE_WS2812);
+			deviceHyperionUsbasp->open();
+			device = deviceHyperionUsbasp;
 	}
-	else if (type == "test")
+	else if (type == "philipshue")
 	{
 		const std::string output = deviceConfig["output"].asString();
-		device = new LedDeviceTest(output);
+		device = new LedDevicePhilipsHue(output);
 	}
 
-	// NicoHood
+		// NicoHood
 	else if (type == "sharedmemory")
 	{
 		// creates a new device for sending led information to the shared memory
@@ -184,6 +186,12 @@ LedDevice * LedDeviceFactory::construct(const Json::Value & deviceConfig)
 		// open the Serial and start the Protocol
 		deviceSerial->open(serialDevice, serialBaud);
 		device=deviceSerial;
+	}
+
+	else if (type == "test")
+	{
+		const std::string output = deviceConfig["output"].asString();
+		device = new LedDeviceTest(output);
 	}
 	else
 	{

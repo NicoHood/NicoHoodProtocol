@@ -83,7 +83,7 @@ private:
 
 // Serial Protocol
 #include <wiringPi.h>
-#include <SerialProtocol.h>
+#include <NicoHoodProtocol.h>
 // Data Stream Addresses
 const int addressAmbilight = 1;
 // General Commands

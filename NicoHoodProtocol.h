@@ -215,6 +215,7 @@ public:
 	inline bool read(int &fd){
 		// check if fd has changed and reset
 		static int prevfd=-1;
+		if(fd<0)return false;
 		if(fd!=prevfd){
 			prevfd=fd;
 			reset();
@@ -252,6 +253,8 @@ public:
 	inline bool read(Stream &s){ return read(&s);}
 	inline bool read(Stream *pStream){
 		// check if Stream has changed and reset
+		// you might want to check if there is any pending reading
+		// with !getErrorLevel()&NHP_MASK_INPUT
 		static Stream *prevStream=NULL;
 		if(pStream!=prevStream){
 			prevStream=pStream;

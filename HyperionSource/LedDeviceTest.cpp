@@ -145,8 +145,8 @@ int LedDeviceSerial::write(const std::vector<ColorRgb> & ledValues){
 
 	// check Serial for new Commands
 	// no serial error output here (only commands, not needed)
-	while(Protocol.read()){
-		switch(Protocol.getCommand()){
+	while(NHP.read(_fd)){
+		switch(NHP.getCommand()){
 
 		case 0:
 			// No Command is an Address but we dont support Addresses in this Version
@@ -155,7 +155,7 @@ int LedDeviceSerial::write(const std::vector<ColorRgb> & ledValues){
 
 		case commandPing:
 			std::cout << "Ping!" << std::endl;
-			Protocol.sendCommand(commandPong);
+			NHP.sendCommand(commandPong, _fd);
 			break;
 
 		case commandPong:
@@ -190,6 +190,10 @@ int LedDeviceSerial::write(const std::vector<ColorRgb> & ledValues){
 			std::cerr << "Invalid Command via Serial." << std::endl;
 			break;
 		} // end switch
+
+		// No addresses are supported here
+		if(NHP.getAddress())
+			std::cerr << "Invalid Address via Serial." << std::endl;
 
 	} // end while
 
@@ -230,7 +234,7 @@ int LedDeviceSerial::write(const std::vector<ColorRgb> & ledValues){
 		// therefore we update at least one led for every update.
 		if(buffred!=red || buffgreen!=green || buffblue!=blue || i==_updateLed){
 			uint32_t colors = (red<<(8*3)) + (green<<(8*2)) + (blue<<8) + i ;
-			Protocol.sendAddress(addressAmbilight, colors);
+			NHP.sendAddress(addressAmbilight, colors, _fd);
 			updateCount++;
 		}
 		// write previous color data to the buffer
@@ -247,7 +251,7 @@ int LedDeviceSerial::write(const std::vector<ColorRgb> & ledValues){
 	if(_updateLed==_ledCount) _updateLed=0;
 
 	// Write an Update Command to the Serial to update leds
-	Protocol.sendCommand(commandAmbilightUpdate);
+	NHP.sendCommand(commandAmbilightUpdate, _fd);
 	return 0;
 }
 
@@ -259,7 +263,7 @@ int LedDeviceSerial::switchOff(){
 
 		// sends off request
 		std::cout << "Sending Serial off request" << std::endl;
-		Protocol.sendCommand(commandAmbilightOff);
+		NHP.sendCommand(commandAmbilightOff, _fd);
 	}
 	else{
 		std::cerr << "Ambilight already turned off" << std::endl;
@@ -289,13 +293,10 @@ int LedDeviceSerial::open(const char serialDevice[], const unsigned long serialB
 	// try to open as long as its successful
 	while(_fd<0);
 
-	// set Serial for Protocol and send a Ping
-	Protocol.setSerial(_fd);
-
 	// sends a Ping
 	std::cout << "Sending Serial Ping, waiting for Pong" << std::endl;
-	Protocol.sendCommand(commandPing);
-	while(!Protocol.read() && Protocol.getCommand()!=commandPong){
+	NHP.sendCommand(commandPing, _fd);
+	while(!NHP.read(_fd) && NHP.getCommand()!=commandPong){
 		delay(100);
 	}
 	std::cout << "Pong!" << std::endl;
@@ -303,7 +304,7 @@ int LedDeviceSerial::open(const char serialDevice[], const unsigned long serialB
 
 	// sends on request
 	std::cout << "Sending Serial on request" << std::endl;
-	Protocol.sendCommand(commandAmbilightOn);
+	NHP.sendCommand(commandAmbilightOn, _fd);
 
 	return _fd;
 }

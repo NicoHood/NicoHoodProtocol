@@ -24,8 +24,16 @@ hyperionconfig:
 	sudo cp ./HyperionSource/hyperion.config.json /etc/hyperion.config.json
 	@echo Successfully installed hyperionconfig
 
+#only important for developing the new devices
 hyperioncopysource:
 	sudo cp ./HyperionSource/LedDevice* ./hyperion/libsrc/leddevice/
+	sudo cp ./HyperionSource/CMakeLists.txt ./hyperion/CMakeLists.txt
+	@echo Successfully copied sourcefiles
+
+#only important for developing the new devices
+hyperiongetsource:
+	sudo cp ./hyperion/build/ ./HyperionSource/LedDevice* 
+	sudo cp ./HyperionSource/CMakeLists.txt ./hyperion/CMakeLists.txt
 	@echo Successfully copied sourcefiles
 
 serialtest: examples/Arduino_Serial/Pi_Serial.cpp
