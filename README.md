@@ -1,18 +1,31 @@
-SerialProtocol
-==========
+NicoHoodProtocol
+================
 
-A Protocol for Arduino - Raspberry Pi communication
+A Protocol for Arduino-RaspberryPi, Arduino-Arduino and other communication.
 
-*Click Download as zip to download or this link*
-https://github.com/NicoHood/SerialProtocol/archive/master.zip
+This Protocol is designed to send up to 4 bytes through a 1 byte data pipe
+like a serial communication with clear start/end indication. It supports up to 64 addresses
+at the moment and up to 16 direct commands. See specs below.
+
+The Protocol is written for a general use but also has built in functions to use it with
+Arduino and RaspberryPi. It works with and Stream Class on the Arduino like
+HardwareSerial, CDCSerial, Wire, and so on.
+
+Download
+========
+
+To download and install the library just hit the download button somewhere on the right.
+Make sure to rename the folder (remove master). For installation on the Raspberry Pi see
+instructions below.
 
 Dokumentation:
-===========
-http://nicohood.wordpress.com/2014/04/18/arduino-raspberry-pi-serial-communication-protocol-via-usb-and-cc/
-and in local folder ./dokumentation a copy of the blogpost
+==============
+
+For any dokumentation see this readme file, check out the examples or have a look at my blog
+where I explain the examplesn and show off other stuff.
+http://nicohood.wordpress.com/
 
 Questions? Just ask under my blog entry/message me there.
-
 
 Installation on Raspberry Pi
 ============================
@@ -55,23 +68,54 @@ Ambilight Instructions
 ======================
 
 In order to use the ambilight sketches you need to use hyperion as ambilight program and also modify it.
-You can use the precompiled hyperion version and just install it or compile the sources if you like to.
-**The library needs do be installed for this.**
+[**You need to install Hyperion first on your own.**]
+(https://github.com/tvdzwan/hyperion/wiki/installation)
+You can use the pre compiled hyperion version and copy the two files to the system path. 
+You can also recompile the sources (see instruction below).
+
+Edit the hyperion config first. Set the device type to "serial" (default) or "shared memory" (advanced).
+Set baud to 115200 and for output check this:
+
+*Find Serial device on Raspberry with ~ls /dev/tty*
+```
+ARDUINO_UNO "/dev/ttyACM0"
+ARDUINO_MEGA "/dev/ttyACM0"
+ARDUINO_MICRO "/dev/ttyACM0"
+ARDUINO_PRO_MICRO "/dev/ttyACM0"
+ARDUINO_LEONARDO "/dev/ttyACM0"
+FTDI_PROGRAMMER "/dev/ttyUSB0"
+ARDUINO_PRO_MINI "/dev/ttyUSB0"
+// never tested, seems to be for the gpios
+HARDWARE_UART "/dev/ttyAMA0"
+```
+
+Example config:
+```
+	"device" :
+	{
+		"name"       : "MyPi",
+		"type"       : "serial",
+		"output"     : "/dev/ttyACM0",
+		"rate"       : 115200,
+		"colorOrder" : "rgb"
+	},
+```
+The highest baud is to ensure that there is no lagg. For the Micro/Leonardo the baud doesnt care because
+its a CDC Serial (if you dont know what this is, just ignore). For now it seems that the Micro/Leonardo
+cant handle ambilight on the CDC (usb) Serial, because the implemenation is too slow. But you can use Serial1
+on the Micro/Leonardo and a ftdi programmer to get to usb (connect rx-tx, tx-rx, gnd-gnd).
 
 ```bash
 $ cd /home/pi/Desktop/Arduino/libraries/NicoHoodProtocol/
 $ sudo make hyperionmod
 $ sudo make hyperionconfig
- ```
-
- *Find Serial device on Raspberry with ~ls /dev/tty*
- ARDUINO_UNO "/dev/ttyACM0"
- FTDI_PROGRAMMER "/dev/ttyUSB0"
- HARDWARE_UART "/dev/ttyAMA0"
+```
 
  Additional: How to compile Hyperion
 ====================================
- How to compile the new Hyperion:
+**The NicoHoodProtocol and WiringPi library needs do be installed for this.**
+
+How to compile the new Hyperion:
 
 ```bash
 $ sudo apt-get update
@@ -95,7 +139,7 @@ $ sudo mkdir "$HYPERION_DIR/build"
 $ cd "$HYPERION_DIR/build"
 # run cmake to generate make files on the raspberry pi
 sudo cmake ..
-# run make to build Hyperion (takes about 60min)
+# run make to build Hyperion (takes about 60min for the first compiling)
 sudo make
  ```
 
@@ -106,9 +150,7 @@ $ sudo killall hyperiond
 
 #copy your config to build/bin/hyperionconfig.json , in config set type to "serial" or "sharedmemory"
 #set output to device (above), rate to the serial baud if you use serial. you can use "shkey" for a personal shkey
-#example for serial:
-#"output"     : "/dev/ttyUSB0",
-#"rate"       : 115200,
+#see example above
 $ sudo cp ../../HyperionSource/hyperion.config.json bin/hyperion.config.json
 
 #start new hyperion (close with crtl+c)
@@ -124,18 +166,31 @@ $ sudo cp ./bin/hyperion-remote /usr/bin/
 $ sudo cp ./bin/hyperiond /usr/bin/
 $ sudo cp ./bin/hyperion.config.json /etc/hyperion.config.json
 ```
-  
-  /usr/bin/hyperiond /etc/hyperion.config.json </dev/null >/dev/null 2>&1 &
-hyperion-remote --effect "Rainbow swirl fast" --duration 3000
-  
- General information about compiling:
+
+For developing new code you can edit the sources in HyperionSource and do in the main path
+```bash
+$ sudo make hyperioncopysource
+$ sudo ./hyperion/build/make
+$ sudo make hyperiongetsource
+$ sudo make hyperionmod
+$ sudo make hyperionconfig
+$ sudo killall hyperiond
+$ sudo /usr/bin/hyperiond /etc/hyperion.config.json </dev/null >/dev/null 2>&1 &
+$ sudo hyperion-remote --effect "Rainbow swirl fast" --duration 3000
+```
+
+General information about compiling:
 If the Arduino and Raspberry program are placed in the same path make sure to name them different (Pi_programm.cpp, Arduino_programm.ino).
 You can add other entrys to the makefile with your own sketches, or just create a new makefile
 You can also compile every sketch with the following compiler flags (install wiringPi and NicoHoodProtocol first):
-gcc -o outpath/outname.o inpath/inname.cpp -DRaspberryPi -lwiringPi -lSerialProtocol -pedantic -Wall
+gcc -o outpath/outname.o inpath/inname.cpp -DRaspberryPi -lwiringPi -lNicoHoodProtocol -pedantic -Wall
 For uninstall just delete the files that the makefile writes. Havent created an uninstall yet, sorry.
+For reinstall just use the install again.
 You might want to checkout the makefile in the Arduino_Serial example
- 
+
+Under Construction
+==================
+
  Direct compile and start program:
  cd /home/pi/Desktop/Arduino/libraries/SerialProtocol/examples/Ambilight
  sudo gcc -o Ambilight_Serial.o Ambilight_Serial.cpp -pedantic -Wall -lwiringPi -lSerialProtocol -DRaspberryPi  && sudo ./Ambilight_Serial.o
@@ -144,32 +199,19 @@ You might want to checkout the makefile in the Arduino_Serial example
  sudo nano /etc/rc.local
  sudo /home/pi/Desktop/Programs/Ambilight_Serial.o </dev/null >/dev/null 2>&1 &
  
- Shared memory Information:
- If you want to use the Serial communication on the pi for other stuff like a reboot or so you need to do it different.
- Hyperion will output the Led information to a shared memory and you need to analyze this memory. This just works the same like
- the Serial mod in Hyperion, just that you need to write it again, but you can add other stuff to your program.
- Set type to "sharedMemory" and optional shkey (default: 1213)
- Check if shared memory is set: ipcs
- Nice (german) dokumentation about shared memory
- http://openbook.galileocomputing.de/unix_guru/node393.html
- 
- 
+Shared memory Information:
+==========================
+If you want to use the Serial communication on the pi for other stuff like a reboot or so you need to do it different.
+Hyperion will output the Led information to a shared memory and you need to analyze this memory. This just works the same like
+the Serial mod in Hyperion, just that you need to write it again, but you can add other stuff to your program.
+Set type to "sharedMemory" and optional shkey (default: 1213)
+Check if shared memory is set: ipcs
+Nice (german) dokumentation about shared memory
+http://openbook.galileocomputing.de/unix_guru/node393.html
 
-Explanation
-========
 
-```bash
-var s = "JavaScript syntax highlighting";
-alert(s);
-alert(s);
-alert(s);
-alert(s);
-```
- 
-```python
-s = "Python syntax highlighting"
-print s
-```
+Explanation of the Protocol
+===========================
  
 ```
 No language indicated, so no syntax highlighting. 
@@ -191,18 +233,10 @@ The reader has to decode this of course. Same works for the 4 bit command.
 Address (2-6 blocks) or Command (1block):
 ==========================================================
 
+| Lead     | Data3    | Data2    | Data1    | Data0    | End      |
+| -------- |:--------:|:--------:|:--------:|:--------:| --------:|
+| 11LLLDDD | 0DDDDDDD | 0DDDDDDD | 0DDDDDDD | 0DDDDDDD | 10AAAAAA |
 
-|11LLLDDD|0DDDDDDD|0DDDDDDD|0DDDDDDD|0DDDDDDD|10AAAAAA|
-
-
-| Tables        | Are           | Cool  |
-| ------------- |:-------------:| -----:|
-| col 3 is      | right-aligned | $1600 |
-| col 2 is      | centered      |   $12 |
-| zebra stripes | are neat      |    $1 |
-
-
-==========================================================
 Lead: 2bit lead indicator(11), 3bit length (including data bit #31, command bit #3), 3bit data/3bit command
 Data: 1bit data indicator(0) , 7bit optional data (0-4 blocks)
 End : 2bit end indicator (10), 6bit address
