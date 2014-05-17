@@ -368,7 +368,7 @@
 	"bootsequence" : 
 	{
 		"effect" : "Rainbow swirl fast",
-		"duration_ms" : 3000
+		"duration_ms" : 8000
 	},
 
 	///  The configuration for the frame-grabber, contains the following items: 

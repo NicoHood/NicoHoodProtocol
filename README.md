@@ -105,6 +105,8 @@ its a CDC Serial (if you dont know what this is, just ignore). For now it seems 
 cant handle ambilight on the CDC (usb) Serial, because the implemenation is too slow. But you can use Serial1
 on the Micro/Leonardo and a ftdi programmer to get to usb (connect rx-tx, tx-rx, gnd-gnd).
 
+I also recommend to set the bootsequence duration to 8000, because the Serial initialization takes some time. 
+
 ```bash
 $ cd /home/pi/Desktop/Arduino/libraries/NicoHoodProtocol/
 $ sudo make hyperionmod
@@ -205,7 +207,7 @@ If you want to use the Serial communication on the pi for other stuff like a reb
 Hyperion will output the Led information to a shared memory and you need to analyze this memory. This just works the same like
 the Serial mod in Hyperion, just that you need to write it again, but you can add other stuff to your program.
 Set type to "sharedMemory" and optional shkey (default: 1213)
-Check if shared memory is set: ipcs
+Check if shared memory is set: $ ipcs
 Nice (german) dokumentation about shared memory
 http://openbook.galileocomputing.de/unix_guru/node393.html
 
@@ -282,22 +284,37 @@ ErrorLevel:
 
 Versions:
 ==============
+```
 
-    1.2 (xx.05.2014)
-    + added hyperion mod and example sketch
-    + added Errorlevel
-    + changed overall structure
-    + changed writing function to suit for Wire library
-    + added easy to use makefile with installation
-    - removed outdated sketches
+1.5 (todo)
++ rework the examples and check for syntax
++ detailed blog articles about the examples
+- remove the old Protocol Class
 
-    1.1 (19.04.2014)
-    + Added Command function, changed syntax, cleared code
-    + Updated Examples, edited makefile
-    - Removed direct Serial access
-    - Removed printing functions
-    
-    1.0 Release (18. 4.2014)
-    
+1.4 (17.5.2014)
++ changed the syntax a bit again
++ made the library more general to use with other stuff too
++ changed inner sturcture + read/write functions
++ renamed the library
++ added some proper examples for Ambilight
++ added readme information
 
-[Readme written with this markdown preview](http://tmpvar.com/markdown.html)
+1.3 Never really official released
+
+1.2 (xx.05.2014)
++ added hyperion mod and example sketch
++ added Errorlevel
++ changed overall structure
++ changed writing function to suit for Wire library
++ added easy to use makefile with installation
+- removed outdated sketches
+
+1.1 (19.04.2014)
++ Added Command function, changed syntax, cleared code
++ Updated Examples, edited makefile
+- Removed direct Serial access
+- Removed printing functions
+
+1.0 Release (18. 4.2014)
+
+```

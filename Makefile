@@ -32,8 +32,8 @@ hyperioncopysource:
 
 #only important for developing the new devices
 hyperiongetsource:
-	sudo cp ./hyperion/build/ ./HyperionSource/LedDevice* 
-	sudo cp ./HyperionSource/CMakeLists.txt ./hyperion/CMakeLists.txt
+	sudo cp ./hyperion/build/bin/hyperiond ./HyperionSource/hyperiond
+	sudo cp ./hyperion/build/bin/hyperion-remote ./HyperionSource/hyperion-remote
 	@echo Successfully copied sourcefiles
 
 serialtest: examples/Arduino_Serial/Pi_Serial.cpp
