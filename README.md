@@ -8,7 +8,7 @@ like a serial communication with clear start/end indication. It supports up to 6
 at the moment and up to 16 direct commands. See specs below.
 
 The Protocol is written for a general use but also has built in functions to use it with
-Arduino and RaspberryPi. It works with and Stream Class on the Arduino like
+Arduino and RaspberryPi. It works with any Stream Class on the Arduino like
 HardwareSerial, CDCSerial, Wire, and so on.
 
 Download
@@ -18,18 +18,18 @@ To download and install the library just hit the download button somewhere on th
 Make sure to rename the folder (remove master). For installation on the Raspberry Pi see
 instructions below.
 
-Dokumentation:
+Documentation:
 ==============
 
-For any dokumentation see this readme file, check out the examples or have a look at my blog
-where I explain the examplesn and show off other stuff.
+For any documentation see this readme file, check out the examples or have a look at my blog
+where I explain the examples and show off other stuff.
 http://nicohood.wordpress.com/
 
 Questions? Just ask under my blog entry/message me there.
 
 Installation on Raspberry Pi
 ============================
-This Part is only important for the Raspberry Pi, if you want to use it there.
+This part is only important for the Raspberry Pi, if you want to use it there.
 
 ```bash
 #Before you can use the library on Raspberry Pi with the Serial interface
