@@ -289,6 +289,7 @@ Versions:
 1.5 (todo)
 + rework the examples and check for syntax
 + detailed blog articles about the examples
++ add keywords.txt definitions
 - remove the old Protocol Class
 
 1.4 (17.5.2014)
