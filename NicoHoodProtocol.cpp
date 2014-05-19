@@ -17,21 +17,19 @@ NHProtocol Protocol;
 bool NHProtocol::read(uint8_t input){
 	//reset if previous read was with an input/error
 	if(mErrorLevel){
-		// reset fully read data
-		mCommand=0;
-		mAddress=0;
-		mData=0;
-
 		// if previous read was a lead error keep this byte
 		if(mErrorLevel&NHP_ERR_LEAD){
-			readbuffer[0]=readbuffer[readlength+1];
+			readbuffer[0]=readbuffer[readlength];
 			readlength=1;
 		}
 		else readlength=0;
-
-		// reset ErrorLevel <-- outside if?
-		mErrorLevel=NHP_INPUT_NO;
 	}
+	
+	// reset fully read data
+	mCommand=0;
+	mAddress=0;
+	mData=0;
+	mErrorLevel=0;
 
 	//write input to the buffer
 	readbuffer[readlength]=input;
