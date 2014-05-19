@@ -177,13 +177,18 @@ public:
 	// buffer for read/write operations
 	uint8_t readbuffer[6];
 	uint8_t readlength;
+	inline void resetreadbuffer() { readlength=0;}
 	uint8_t writebuffer[6];
 	uint8_t writelength;
+	inline void resetwritebuffer() { writelength=0;}
 
 	// access for the variables
 	inline uint8_t  getCommand()   { return mCommand;    }
 	inline uint8_t  getAddress()   { return mAddress;    }
 	inline uint32_t getData()      { return mData;       }
+	inline uint16_t getChecksumData() { return mData;	 }
+	inline uint8_t  getChecksumData0() { return mData;	 }
+	inline uint8_t  getChecksumData1() { return mData>>8;}
 	inline uint8_t  getErrorLevel(){ return mErrorLevel; }
 
 	//================================================================================
@@ -206,7 +211,8 @@ public:
 	}
 	// write two bytes with its inverse
 	inline void writeChecksum(uint8_t address, uint16_t data){
-		uint32_t checksum=(uint32_t((~data))<<16)|data;
+		uint32_t temp=~data;
+		uint32_t checksum=(temp<<16)|data;
 		write(address,checksum);  
 	}
 
@@ -235,6 +241,15 @@ public:
 
 	inline int8_t sendAddress(uint8_t a, uint32_t d, int &fd){
 		write(a,d);
+		for(int i=0;i<writelength;i++){
+			if(fd<0) return -1;
+			serialPutchar (fd, writebuffer[i]);
+		}
+		return writelength;
+	}
+
+	inline int8_t sendAddressChecksum(uint8_t a, uint32_t d, int &fd){
+		writeChecksum(a,d);
 		for(int i=0;i<writelength;i++){
 			if(fd<0) return -1;
 			serialPutchar (fd, writebuffer[i]);
@@ -276,6 +291,13 @@ public:
 	inline uint8_t sendAddress(uint8_t a, uint32_t d, Stream &s){ return sendAddress(a,d,&s);}
 	inline uint8_t sendAddress(uint8_t a, uint32_t d, Stream *pStream){
 		write(a,d);
+		pStream->write(writebuffer, writelength);
+		return writelength;
+	}
+
+	inline uint8_t sendAddressChecksum(uint8_t a, uint32_t d, Stream &s){ return sendAddressChecksum(a,d,&s);}
+	inline uint8_t sendAddressChecksum(uint8_t a, uint32_t d, Stream *pStream){
+		writeChecksum(a,d);
 		pStream->write(writebuffer, writelength);
 		return writelength;
 	}

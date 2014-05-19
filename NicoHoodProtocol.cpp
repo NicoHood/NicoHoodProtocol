@@ -17,6 +17,11 @@ NHProtocol Protocol;
 bool NHProtocol::read(uint8_t input){
 	//reset if previous read was with an input/error
 	if(mErrorLevel){
+		// cancel any pending data reads if a reset was triggered
+		if(mErrorLevel & NHP_INPUT_RESET){
+			mBlocks=0;
+			mWorkData=0;
+		}
 		// if previous read was a lead error keep this byte
 		if(mErrorLevel&NHP_ERR_LEAD){
 			readbuffer[0]=readbuffer[readlength];
@@ -24,7 +29,7 @@ bool NHProtocol::read(uint8_t input){
 		}
 		else readlength=0;
 	}
-	
+
 	// reset fully read data
 	mCommand=0;
 	mAddress=0;
