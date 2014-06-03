@@ -13,14 +13,20 @@
 NHP	KEYWORD3
 
 read	KEYWORD2
-write	KEYWORD2
+readChecksum	KEYWORD2
+writeCommand	KEYWORD2
+writeAddress	KEYWORD2
+writeChecksum	KEYWORD2
 reset	KEYWORD2
 sendCommand	KEYWORD2
 sendAddress	KEYWORD2
+sendChecksum	KEYWORD2
 getData	KEYWORD2
 getAddress	KEYWORD2
 getCommand	KEYWORD2
 getErrorLevel	KEYWORD2
+resetreadbuffer	KEYWORD2
+resetwritebuffer	KEYWORD2
 
 #######################################
 # Instances (KEYWORD2)

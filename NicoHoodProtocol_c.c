@@ -21,17 +21,66 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#include "NicoHoodProtocol.h"
+#include "NicoHoodProtocol_c.h"
 
-// extern Protocol for easy use (Protocol is old)
-NHProtocol NHP;
-NHProtocol Protocol;
+//================================================================================
+// Public variables
+//================================================================================
+
+uint8_t NHPreadbuffer[6]={0};
+uint8_t NHPreadlength=0;
+uint8_t NHPwritebuffer[6]={0};
+uint8_t NHPwritelength=0;
+
+//================================================================================
+// Private variables
+//================================================================================
+
+// Fully read data
+static uint8_t mCommand=0;
+static uint8_t mAddress=0;
+static uint32_t mData=0;
+static uint8_t mErrorLevel=NHP_INPUT_RESET;
+
+// in progress reading data
+static uint8_t mBlocks=0;
+static uint32_t mWorkData=0;
+
+//================================================================================
+//General Functions
+//================================================================================
+
+// reset Protocol on the next reading to start a new clean reading
+void NHPreset(void){ mErrorLevel=NHP_INPUT_RESET; }
+
+// access for the variables
+uint8_t  NHPgetCommand()   { return mCommand;    }
+uint8_t  NHPgetAddress()   { return mAddress;    }
+uint32_t NHPgetData()      { return mData;       }
+uint16_t NHPgetChecksumData() { return mData;	   }
+uint8_t  NHPgetChecksumData0() { return mData;	 }
+uint8_t  NHPgetChecksumData1() { return mData>>8;}
+uint8_t  NHPgetErrorLevel(){ return mErrorLevel; }
+
+// reset buffer for read/write operations
+void NHPresetreadbuffer() { 
+	while(NHPreadlength){
+		NHPreadlength--;
+		NHPreadbuffer[NHPreadlength]=0;
+	}
+}
+void NHPresetwritebuffer(){ 
+	while(NHPwritelength){
+		NHPwritelength--;
+		NHPwritebuffer[NHPwritelength]=0;
+	}
+}
 
 //================================================================================
 //Read
 //================================================================================
 
-bool NHProtocol::read(uint8_t input){
+bool NHPread(uint8_t input){
 	//reset if previous read was with an input/error
 	if(mErrorLevel){
 		// cancel any pending data reads if a reset was triggered
@@ -41,10 +90,10 @@ bool NHProtocol::read(uint8_t input){
 		}
 		// if previous read was a lead error keep this byte
 		if(mErrorLevel&NHP_ERR_LEAD){
-			readbuffer[0]=readbuffer[readlength];
-			readlength=1;
+			NHPreadbuffer[0]=NHPreadbuffer[NHPreadlength];
+			NHPreadlength=1;
 		}
-		else readlength=0;
+		else NHPreadlength=0;
 	}
 
 	// reset fully read data
@@ -54,8 +103,8 @@ bool NHProtocol::read(uint8_t input){
 	mErrorLevel=0;
 
 	//write input to the buffer
-	readbuffer[readlength]=input;
-	readlength++;
+	NHPreadbuffer[NHPreadlength]=input;
+	NHPreadlength++;
 
 	// check the lead/end/data indicator
 	switch(input&NHP_MASK_START){
@@ -65,7 +114,7 @@ bool NHProtocol::read(uint8_t input){
 			// we were still reading!  Log an error
 			if(mBlocks){
 				mErrorLevel |= NHP_ERR_LEAD | NHP_ERR_READ;
-				readlength--;
+				NHPreadlength--;
 			}
 
 			// read command indicator or block length
@@ -133,10 +182,10 @@ bool NHProtocol::read(uint8_t input){
 }
 
 // reads two bytes and check its inverse
-bool NHProtocol::readChecksum(uint8_t input){
-	if(read(input)){
+bool NHPreadChecksum(uint8_t input){
+	if(NHPread(input)){
 		// if there is an address input (comand invalid, too insecure)
-		if(getAddress() && (((getData()&0xFFFF) ^ (getData()>>16))==0xFFFF)){
+		if(NHPgetAddress() && (((NHPgetData()&0xFFFF) ^ (NHPgetData()>>16))==0xFFFF)){
 			// make sure to use getAddress() and getData()&0xFFFF
 			return true;
 		}
@@ -149,13 +198,13 @@ bool NHProtocol::readChecksum(uint8_t input){
 //Write
 //================================================================================
 
-void NHProtocol::writeCommand(uint8_t command){
+void NHPwriteCommand(uint8_t command){
 	// send lead mask 11 + length 00|0 or 00|1 including the last bit for the 4 bit command
-	writebuffer[0] = NHP_MASK_LEAD | ((command-1) & NHP_MASK_COMMAND);
-	writelength=1;
+	NHPwritebuffer[0] = NHP_MASK_LEAD | ((command-1) & NHP_MASK_COMMAND);
+	NHPwritelength=1;
 }
 
-void NHProtocol::writeAddress(uint8_t address, uint32_t data){
+void NHPwriteAddress(uint8_t address, uint32_t data){
 	// start with the maximum size of blocks
 	uint8_t blocks=7;
 
@@ -165,14 +214,14 @@ void NHProtocol::writeAddress(uint8_t address, uint32_t data){
 		if(nextvalue>NHP_MASK_DATA_3BIT){
 			// special case for the MSB
 			if(blocks==7) {
-				writebuffer[0] = nextvalue;
+				NHPwritebuffer[0] = nextvalue;
 				blocks--;
 			}
 			break;
 		}
 		else{
 			// write the possible first 3 bits and check again after
-			writebuffer[0] = nextvalue;
+			NHPwritebuffer[0] = nextvalue;
 			blocks--;
 		}
 	}
@@ -180,114 +229,26 @@ void NHProtocol::writeAddress(uint8_t address, uint32_t data){
 	// write the rest of the data bits
 	uint8_t datablocks=blocks-2;
 	while(datablocks>0){
-		writebuffer[datablocks] = data & NHP_MASK_DATA_7BIT;
+		NHPwritebuffer[datablocks] = data & NHP_MASK_DATA_7BIT;
 		data>>=7;
 		datablocks--;
 	}
 
 	// write lead + length mask
-	writebuffer[0] |= NHP_MASK_LEAD | (blocks <<3);
+	NHPwritebuffer[0] |= NHP_MASK_LEAD | (blocks <<3);
 
 	// write end mask
-	writebuffer[blocks-1] = NHP_MASK_END | ((address-1) & NHP_MASK_ADDRESS);
+	NHPwritebuffer[blocks-1] = NHP_MASK_END | ((address-1) & NHP_MASK_ADDRESS);
 
 	// save the length
-	writelength=blocks;
+	NHPwritelength=blocks;
 }
+
 
 // writes two bytes with its inverse
-void NHProtocol::writeChecksum(uint8_t address, uint16_t data){
+void NHPwriteChecksum(uint8_t address, uint16_t data){
 	uint32_t temp=~data;
 	uint32_t checksum=(temp<<16)|data;
-	writeAddress(address,checksum);  
+	NHPwriteAddress(address,checksum);  
 }
 
-//================================================================================
-//Old Verison of Send Command/Address
-//================================================================================
-
-
-//void NHProtocol::sendAddress(uint8_t address, uint32_t data){
-//	// block buffer for sending
-//	uint8_t b[6];
-//
-//	// b[5] has the ‘address’ byte
-//	b[5] = 0x80 | ((address-1) & 0x3F);
-//
-//	// fill in the rest of the data, b[0]-b[4] is going to have data
-//	// in MSB order, e.g. b[4] will have the lowest 7 bits, b[3] the next
-//	// lowest, etc...
-//	b[4] = data & 0x7F;
-//
-//	uint8_t blocks=2;
-//
-//	// only loop/shift if there's data to put out
-//	while(data>0x7F) {
-//		data >>= 7;
-//		b[6-(++blocks)] = data & 0x7F;
-//	}
-//
-//	// if we can fit our highest bits in the first block, add them here
-//	if((blocks==6) || b[6-blocks] < 8) {
-//		// add to existing data
-//	}
-//	// if not just initialize the next byte
-//	else b[6-(++blocks)] =  0;
-//
-//	// add in the block count to lead
-//	b[6-blocks] |=  0xC0 | (blocks<<3);
-//
-//	// now write out the data - the blocks array in reverse, which will
-//	// get your data written out in LSB order
-//#ifdef RaspberryPi
-//	for(int i=0;i<blocks;i++){
-//		serialPutchar (mSerial, b[6-blocks+i]);
-//	}
-//#else //Arduino
-//	// we need to write the buffer as array to work for the Wire library
-//	mSerial->write(&b[6-blocks],blocks);
-//#endif
-//
-//	// return the number of blocks written to the Serial
-//	return blocks;
-//}
-
-
-//void NHProtocol::sendAddress(uint8_t address, uint32_t data){
-//	// block buffer for sending
-//	uint8_t b[6];
-//
-//	// b[0] has the ‘address’ byte
-//	b[0] = 0x80 | ((address-1) & 0x3F);
-//
-//	// fill in the rest of the data, b[1]-b[5] is going to have data
-//	// in LSB order, e.g. b[1] will have the lowest 7 bits, b[2] the next
-//	// lowest, etc...
-//	uint8_t blocks=0;
-//	b[++blocks] = data & 0x7F;
-//
-//	// only loop/shift if there's data to put out
-//	while(data > 0x7F) {
-//		data >>= 7;
-//		b[++blocks] = data & 0x7F;
-//	}
-//
-//	// setup the header
-//	uint8_t lead = 0xC0;
-//
-//	// if we can fit our highest bits in the first block, add them here
-//	if((blocks==5) || b[blocks] < 8) {
-//		lead |= b[blocks--] & 0x0F;
-//	}
-//
-//	// add in the block count to lead
-//	lead |= (blocks+2)<<3;
-//
-//	// now write out the data - lead, then the blocks array in reverse, which will
-//	// get your data written out in MSB order, ending with the address block
-//	serWrite(lead);
-//	do { 
-//		serWrite(b[blocks]); 
-//	} 
-//	while(blocks--);
-//}

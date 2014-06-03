@@ -1,11 +1,31 @@
 /*
-NicoHoodProtocol.h - NicoHoodProtocol library - description
-Copyright (c) 2014 NicoHood.  All right reserved.
-Daniel Garcia from the FASTLED library helped me with this code
+Copyright (c) 2014 NicoHood
+See the readme for credit to other people.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 */
 
 #ifndef NICOHOODPROTOCOL_h
 #define NICOHOODPROTOCOL_h
+
+#include <stdint.h> //uint_t definitions
+#include <stdbool.h> //bool type
 
 //================================================================================
 //Settings
@@ -23,9 +43,6 @@ Daniel Garcia from the FASTLED library helped me with this code
 #include <wiringPi.h>
 #include <wiringSerial.h>
 
-//include system librarys
-#include <stdint.h> //uint8_t definitions
-
 //Devices, check with ~ls /dev/tty*
 #define ARDUINO_UNO "/dev/ttyACM0"
 #define ARDUINO_MEGA "/dev/ttyACM0"
@@ -41,70 +58,13 @@ Daniel Garcia from the FASTLED library helped me with this code
 //Arduino only
 //================================================================================
 
-#else //Arduino
+#elif defined ARDUINO
+
 
 //Arduino Library
 #include <Arduino.h>
 
 #endif //#ifdef RaspberryPi
-
-//================================================================================
-//Explanation
-//================================================================================
-
-/*
-The Protocol is made to send up to 4 bytes as compact as possible.
-They are packed into the Protocol and the result is written in a writebuffer
-that can have up to 6 bytes. These bytes are called blocks.
-It will leave out all zeros befor the MSB. In the chart below you can see how many bytes
-you can send with how many blocks. #0 is the LSB and #31 the MSB.
-
-For the protocol I do a little trick here:
-If it needs to send 6 blocks it save the MSB #31 of the data in the length.
-This works, because the length is never more than 6 (see chart below).
-The reader has to decode this of course. Same works for the 4 bit command.
-
-Address (2-6 blocks) or Command (1block):
-==========================================================
-|11LLLDDD||0DDDDDDD|0DDDDDDD|0DDDDDDD||0DDDDDDD||10AAAAAA|
-==========================================================
-Lead: 2bit lead indicator(11), 3bit length (including data bit #31, command bit #3), 3bit data/3bit command
-Data: 1bit data indicator(0) , 7bit optional data (0-4 blocks)
-End : 2bit end indicator (10), 6bit address
-
-3bit length in lead explained:
-command  00(0) 4bit command + bit #3 is zero
-command  00(1) 4bit command + bit #3 is one
-0-3   =2 010   2 blocks (3bit)
-4-10  =3 011   3 blocks (10bit)
-11-17 =4 100   4 blocks (17bit)
-18-24 =5 101   5 blocks (24bit)
-25-31 =6 11(0) 6 blocks (32bit) + bit #31 is zero
-32    =7 11(1) 6 blocks (32bit) + bit #31 is one
-
-The Protocol knows at any time if its a lead/data/end block.
-It will detect Protocol syntax errors in ErrorLevel (see notes below).
-If you send other stuff through the stream you can filter out Protocol
-data for example. Positiv is that: 0 and 255 is always invalid on its own.
-Ascii letters are also invalid on their own and fast recognized.
-If you strictly want to filter out Protocol data i recommend to send an inverse
-of two bytes (see user example below).
-
-ErrorLevel:
-==========
-|76543210|
-==========
-0-3: Input indicators or intern reset trigger, 0 is set if 1 or 2 is set
-0: NHP_INPUT_NEW
-1: NHP_INPUT_ADDRESS
-2: NHP_INPUT_COMMAND
-3: NHP_INPUT_RESET
-4-7: Error indicator, 4 is set if 5,6 or 7 is set
-4: NHP_ERR_READ
-5: NHP_ERR_END
-6: NHP_ERR_DATA
-7: NHP_ERR_LEAD
-*/
 
 //================================================================================
 //Definitions
@@ -139,6 +99,12 @@ ErrorLevel:
 #define NHP_MASK_DATA_3BIT	0x07 //B00000|111
 #define NHP_MASK_ADDRESS	0x3F //B00|111111
 
+// Reserved Addresses
+#define NHP_ADDRESS_CONTROL 0x01
+
+// Reserved Usages
+#define NHP_USAGE_ARDUINOHID 0x01
+
 //================================================================================
 //Protocol_ Class
 //================================================================================
@@ -168,20 +134,6 @@ public:
 		writelength=0;
 	}
 
-	// general multifunctional read/write functions
-	bool read(uint8_t input);
-	inline void reset(void){ mErrorLevel=NHP_INPUT_RESET; }
-	void write(uint8_t command);
-	void write(uint8_t address, uint32_t data);
-
-	// buffer for read/write operations
-	uint8_t readbuffer[6];
-	uint8_t readlength;
-	inline void resetreadbuffer() { readlength=0;}
-	uint8_t writebuffer[6];
-	uint8_t writelength;
-	inline void resetwritebuffer() { writelength=0;}
-
 	// access for the variables
 	inline uint8_t  getCommand()   { return mCommand;    }
 	inline uint8_t  getAddress()   { return mAddress;    }
@@ -191,30 +143,37 @@ public:
 	inline uint8_t  getChecksumData1() { return mData>>8;}
 	inline uint8_t  getErrorLevel(){ return mErrorLevel; }
 
+	// buffer for read/write operations
+	uint8_t readbuffer[6];
+	uint8_t readlength;
+	uint8_t writebuffer[6];
+	uint8_t writelength;
+	inline void resetreadbuffer(){ 
+		while(readlength){
+			readlength--;
+			readbuffer[readlength]=0;
+		}
+	}
+	inline void resetwritebuffer() { 
+		while(writelength){
+			writelength--;
+			writebuffer[writelength]=0;
+		}
+	}
+
+	// general multifunctional read/write functions
+	inline void reset(void){ mErrorLevel=NHP_INPUT_RESET; }
+	bool read(uint8_t input);
+	bool readChecksum(uint8_t input);
+	void writeCommand(uint8_t command);
+	void writeAddress(uint8_t address, uint32_t data);
+	void writeChecksum(uint8_t address, uint16_t data);
+
 	//================================================================================
 	//Functions for easy user interaction (end of the main Protocol implementation)
 	//You can implement similar functions for your specific data transfer method.
 	//This is more thought as an example and for easy use. Thatswhy inline.
 	//================================================================================
-
-	// reads two bytes and check its inverse
-	inline bool readChecksum(uint8_t input){
-		if(read(input)){
-			// if there is an address input (comand invalid, too insecure)
-			if(getAddress() && (((getData()&0xFFFF) ^ (getData()>>16))==0xFFFF)){
-				// make sure to use getAddress() and getData()&0xFFFF
-				return true;
-			}
-			// else you can forward the buffer or pass -1 as error
-		}
-		return false;
-	}
-	// write two bytes with its inverse
-	inline void writeChecksum(uint8_t address, uint16_t data){
-		uint32_t temp=~data;
-		uint32_t checksum=(temp<<16)|data;
-		write(address,checksum);  
-	}
 
 #ifdef RaspberryPi
 	// set filedescriptor
@@ -240,7 +199,7 @@ public:
 	}
 
 	inline int8_t sendAddress(uint8_t a, uint32_t d, int &fd){
-		write(a,d);
+		writeAddress(a,d);
 		for(int i=0;i<writelength;i++){
 			if(fd<0) return -1;
 			serialPutchar (fd, writebuffer[i]);
@@ -248,8 +207,8 @@ public:
 		return writelength;
 	}
 
-	inline int8_t sendAddressChecksum(uint8_t a, uint32_t d, int &fd){
-		writeChecksum(a,d);
+	inline int8_t sendChecksum(uint8_t a, uint32_t d, int &fd){
+		writeAddressChecksum(a,d);
 		for(int i=0;i<writelength;i++){
 			if(fd<0) return -1;
 			serialPutchar (fd, writebuffer[i]);
@@ -259,12 +218,12 @@ public:
 
 	inline int8_t sendCommand(uint8_t c, int &fd){
 		if(fd<0) return -1;
-		write(c);
+		writeCommand(c);
 		serialPutchar (fd, writebuffer[0]);
 		return writelength;
 	}
 
-#else //Arduino
+#elif defined ARDUINO
 	inline bool read(Stream &s){ return read(&s);}
 	inline bool read(Stream *pStream){
 		// check if Stream has changed and reset
@@ -290,13 +249,13 @@ public:
 
 	inline uint8_t sendAddress(uint8_t a, uint32_t d, Stream &s){ return sendAddress(a,d,&s);}
 	inline uint8_t sendAddress(uint8_t a, uint32_t d, Stream *pStream){
-		write(a,d);
+		writeAddress(a,d);
 		pStream->write(writebuffer, writelength);
 		return writelength;
 	}
 
-	inline uint8_t sendAddressChecksum(uint8_t a, uint32_t d, Stream &s){ return sendAddressChecksum(a,d,&s);}
-	inline uint8_t sendAddressChecksum(uint8_t a, uint32_t d, Stream *pStream){
+	inline uint8_t sendChecksum(uint8_t a, uint16_t d, Stream &s){ return sendChecksum(a,d,&s);}
+	inline uint8_t sendChecksum(uint8_t a, uint16_t d, Stream *pStream){
 		writeChecksum(a,d);
 		pStream->write(writebuffer, writelength);
 		return writelength;
@@ -304,7 +263,7 @@ public:
 
 	inline uint8_t sendCommand(uint8_t c,Stream &s){ return sendCommand(c,&s);}
 	inline uint8_t sendCommand(uint8_t c, Stream *pStream){
-		write(c);
+		writeCommand(c);
 		pStream->write(writebuffer, writelength);
 		return writelength;
 	}

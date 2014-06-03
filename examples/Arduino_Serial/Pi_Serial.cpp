@@ -58,7 +58,7 @@
 #include <wiringSerial.h>
 
 //Protocol library
-#include "../../SerialProtocol.h"
+#include <NicoHoodProtocol.h>
 int fd; //filedescriptor
 char device[]= FTDI_PROGRAMMER;
 unsigned long baud = 9600;
@@ -91,7 +91,7 @@ void setup(){
   }
 
   //pass the filedescriptor to the Protocol
-  Protocol.setSerial(fd);
+  //Protocol.setSerial(fd);
 }
 
 
@@ -99,7 +99,7 @@ void loop(){
   // if you want to read every input this time and clear the queue
   //while(Protocol.read()){ 
   // read one input if available
-  if(Protocol.read()){
+  if(Protocol.read(fd)){
     /*
     printf("%s", "Address: "); 
      fflush(stdout);
@@ -162,7 +162,7 @@ void loop(){
   // fade led every 7 sec
   if(millis() - previousMillis > 2000) {
     for(int i=0;i<256;i++){
-      Protocol.sendAddress(1, i);
+      Protocol.sendAddress(1, i, fd);
       //delay(100);
     }    
     previousMillis = millis();   
@@ -170,7 +170,7 @@ void loop(){
 
   // send Ping every 10 sec
   if(millis() - previousMillis2 > 10000) {
-    Protocol.sendCommand(1);
+    Protocol.sendCommand(1, fd);
     previousMillis2 = millis();   
   }
 

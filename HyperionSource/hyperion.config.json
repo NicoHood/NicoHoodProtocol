@@ -14,7 +14,8 @@
 	{
 		"name"       : "MyPi",
 		"type"       : "serial",
-		"output"     : "/dev/ttyACM0",
+		//"output"     : "/dev/ttyACM0",
+		"output"     : "/dev/ttyUSB0",
 		"rate"       : 115200,
 		"colorOrder" : "rgb"
 	},
